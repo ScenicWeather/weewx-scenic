@@ -6,7 +6,7 @@
 
 1. Get an API key
 
-Register for an API key at [stations.nowdawn.com](https://stations.nowdawn.com)
+Register for an API key at [https://stations.nowdawn.com](https://stations.nowdawn.com)
 
 1. Download
 
@@ -16,13 +16,13 @@ Register for an API key at [stations.nowdawn.com](https://stations.nowdawn.com)
 
 `wee_extension --install weewx-nowdawn.zip`
 
-1. Enter parameters in the weewx configuration file
+1. Enter parameters in the WeeWx configuration file
 
-```[StdRESTful]
+`[StdRESTful]
     [[NowDawn]]
-        api_key = API_KEY```
+        api_key = API_KEY`
 
-1. Restart weewx
+1. Restart WeeWx
 
 `sudo /etc/init.d/weewx stop`
 `sudo /etc/init.d/weewx start`
