@@ -1,6 +1,10 @@
 # weewx-nowdawn
 
-### Driver for integrating WeeWx supported weather stations with the NowDawn weather station API
+![Windows Build Status](https://github.com/Now-Dawn/weewx-nowdawn/workflows/Windows/badge.svg)
+![Linux Build Status](https://github.com/Now-Dawn/weewx-nowdawn/workflows/Linux/badge.svg)
+![MIT License](https://img.shields.io/github/license/Now-dawn/weewx-nowdawn)
+
+# Driver for integrating WeeWx supported weather stations with the NowDawn weather station API
 
 ## Installation
 
