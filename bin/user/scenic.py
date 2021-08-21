@@ -1,23 +1,23 @@
-# Copyright 2020 NowDawn
+# Copyright 2021 Scenic Weather
 
 """
-This weewx extension uploads data to a http://stations.nowdawn.com
+This weewx extension uploads data to a http://api.scenicdata.com/station
 
-The protocol is described at the nowdawn blog:
+The protocol is described at the scenic weather blog:
 
 https://community.windy.com/topic/8168/report-you-weather-station-data-to-windy
 
 Minimal configuration
 
 [StdRESTful]
-    [[NowDawn]]
+    [[Scenic]]
         api_key = API_KEY
 
 When using multiple stations, distinguish them using a station identifier.
 For example:
 
 [StdRESTful]
-    [[NowDawn]]
+    [[Scenic]]
         api_key = API_KEY
         station = 1
 
@@ -39,12 +39,13 @@ from weeutil.weeutil import to_bool, to_int
 from weeutil.logger import setup
 
 VERSION = "0.1"
-DEFAULT_URL = 'https://stations.nowdawn.com'
+DEFAULT_URL = "https://api.scenicdata.com/station/%s/key/%s"
+
 REQUIRED_WEEWX = "4.0.0"
 
 if StrictVersion(__version__) < StrictVersion(REQUIRED_WEEWX):
     raise UnsupportedFeature("weewx %s or greater is required, found %s"
-                                   % (REQUIRED_WEEWX, __version__))
+                             % (REQUIRED_WEEWX, __version__))
 
 LOG = getLogger(__name__)
 
@@ -52,13 +53,23 @@ def info(msg):
     """"""
     LOG.info(msg)
 
-class NowDawn(StdRESTbase):
+def get_value(record, key):
+    """"""
+    if None in (record, key):
+        return None
+
+    if key in record:
+        return record[key]
+
+    return None
+
+class Scenic(StdRESTbase):
     """"""
 
     def __init__(self, engine, cfg_dict):
-        super(NowDawn, self).__init__(engine, cfg_dict)
+        super(Scenic, self).__init__(engine, cfg_dict)
         info("version is %s" % VERSION)
-        site_dict = get_site_dict(cfg_dict, 'NowDawn', 'api_key')
+        site_dict = get_site_dict(cfg_dict, 'Scenic', 'api_key')
         if site_dict is None:
             return
 
@@ -79,13 +90,13 @@ class NowDawn(StdRESTbase):
         self.archive_queue.put(event.record)
 
 
-class NowDawnThread(RESTThread):
+class ScenicThread(RESTThread):
     """"""
     def __init__(self, q, api_key, station=0, skip_upload=False,
                  manager_dict=None, post_interval=None, max_backlog=maxsize,
                  stale=None, log_success=True, log_failure=True,
                  timeout=60, max_tries=3, retry_wait=5):
-        super(NowDawnThread, self).__init__(q, protocol_name='NowDawn',
+        super(ScenicThread, self).__init__(q, protocol_name='Scenic',
                                             manager_dict=manager_dict,
                                             post_interval=post_interval,
                                             max_backlog=max_backlog,
@@ -96,44 +107,37 @@ class NowDawnThread(RESTThread):
                                             timeout=timeout,
                                             retry_wait=retry_wait)
         self.api_key = api_key
-        self.station = to_int(station)
-        self.server_url = DEFAULT_URL
+        self.station = to_int(station) # TODO conver to alpha numeric
+        self.server_url = DEFAULT_URL % (station, api)
         info("Data will be uploaded to %s" % self.server_url)
         self.skip_upload = to_bool(skip_upload)
 
     def format_url(self, _):
-        """Return an URL for doing a POST to NowDawn"""
-        return '%s/%s' % (DEFAULT_URL, self.api_key)
+        """Return an URL for doing a POST to Scenic"""
+        return DEFAULT_URL % (station, api_key)
 
     def get_post_body(self, record):
-        """Send a POST request to NowDawn server"""
+        """Send a POST request to Scenic server"""
         record_m = to_METRICWX(record)
         data = {
             'station': self.station,  # integer identifier, usually "0"
             'dateutc': time.strftime("%Y-%m-%d %H:%M:%S",
                                      time.gmtime(record_m['dateTime']))
-            }
-        if 'outTemp' in record_m:
-            data['temp'] = record_m['outTemp']  # degree_C
-        if 'windSpeed' in record_m:
-            data['wind'] = record_m['windSpeed']  # m/s
-        if 'windDir' in record_m:
-            data['winddir'] = record_m['windDir']  # degree
-        if 'windGust' in record_m:
-            data['gust'] = record_m['windGust']  # m/s
-        if 'outHumidity' in record_m:
-            data['rh'] = record_m['outHumidity']  # percent
-        if 'dewpoint' in record_m:
-            data['dewpoint'] = record_m['dewpoint']  # degree_C
-        if 'barometer' in record_m:
-            if record_m['barometer'] is not None:
-                data['pressure'] = 100.0 * record_m['barometer']  # Pascals
-            else:
-                data['pressure'] = None
-        if 'hourRain' in record_m:
-            data['precip'] = record_m['hourRain']  # mm in past hour
-        if 'UV' in record_m:
-            data['uv'] = record_m['UV']
+        }
+        data['temperature'] = get_value(record_m, 'outTemp')  # degree_C
+        data['wind_speed'] = get_value(record_m, 'windSpeed')  # m/s
+        data['wind_direction'] = get_value(record_m, 'windDir')  # degree
+        data['gust'] = get_value(record_m, 'windGust')  # m/s
+        data['humidity'] = get_value(record_m, 'outHumidity')  # percent
+        data['dewpoint'] = get_value(record_m, 'dewpoint')  # degree_C
+        barometric = get_value(record_m, 'barometer')
+        if barometric is None:
+            data['pressure'] = None
+        else:
+            data['pressure'] = 100.0 * barometric  # Pascals
+
+        data['hour_rain'] = get_value(record_m, 'hourRain')  # mm in past hour
+        data['ultraviolet'] = get_value(record_m, 'UV')
 
         body = {
             'observations': [data]
@@ -143,12 +147,13 @@ class NowDawnThread(RESTThread):
 
 
 # Use this hook to test the uploader:
-#   PYTHONPATH=bin python bin/user/nowdawn.py
+#   PYTHONPATH=bin python bin/user/scenic.py
 
 if __name__ == "__main__":
-    setup('nowdawn', {})
+    setup('scenic', {})
+
     QUEUE = Queue()
-    THREAD = NowDawnThread(QUEUE, api_key='ABC123', station=0)
+    THREAD = ScenicThread(QUEUE, api_key='ABC123', station=0)
     THREAD.start()
     RESPONSE = {'dateTime': int(time.time() + 0.5),
                 'usUnits': US, 'outTemp': 32.5, 'inTemp': 75.8,

@@ -1,25 +1,25 @@
-# Installer for NowDawn
-# Copyright 2020 NowDawn
+# Installer for Scenic Weather
+# Copyright 2021 Scenic Weather
 # Distributed under the MIT License
 
 from weecfg.extension import ExtensionInstaller
 
 def loader():
     """"""
-    return NowDawnInstaller()
+    return ScenicInstaller()
 
-class NowDawnInstaller(ExtensionInstaller):
+class ScenicInstaller(ExtensionInstaller):
     def __init__(self):
-        super(NowDawnInstaller, self).__init__(
-            version="0.1",
-            name='nowdawn',
-            description='Upload weather data to NowDawn.',
+        super(ScenicInstaller, self).__init__(
+            version="0.2",
+            name='scenic',
+            description='Upload weather data to Scenic Weather.',
             author="Conor Forde",
-            author_email="contact@nowdawn.com",
-            restful_services='user.nowdawn.NowDawn',
+            author_email="contact@scenicdata.com",
+            restful_services='user.scenicdata.Scenic',
             config={
                 'StdRESTful': {
-                    'NowDawn': {
+                    'Scenic': {
                         'api_key': 'replace_me'}}},
-            files=[('bin/user', ['bin/user/nowdawn.py'])]
-            )
+            files=[('bin/user', ['bin/user/scenic.py'])]
+        )

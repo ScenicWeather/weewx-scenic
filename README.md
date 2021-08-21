@@ -1,29 +1,29 @@
-# weewx-nowdawn
+# weewx-scenic
 
-![Windows Build Status](https://github.com/Now-Dawn/weewx-nowdawn/workflows/Windows/badge.svg)
-![Linux Build Status](https://github.com/Now-Dawn/weewx-nowdawn/workflows/Linux/badge.svg)
-![MIT License](https://img.shields.io/github/license/Now-dawn/weewx-nowdawn)
+![Windows Build Status](https://github.com/ScenicWeather/weewx-scenic/workflows/Windows/badge.svg)
+![Linux Build Status](https://github.com/ScenicWeather/weewx-scenic/workflows/Linux/badge.svg)
+![MIT License](https://img.shields.io/github/license/ScenicWeather/weewx-scenic)
 
-# Driver for integrating WeeWx supported weather stations with the NowDawn weather station API
+# Driver for integrating WeeWx supported weather stations with the Scenic Weather weather station API
 
 ## Installation
 
 1. Get an API key
 
-Register for an API key at [https://stations.nowdawn.com](https://stations.nowdawn.com)
+Register for an API key at [https://stations.scenicdata.com](https://stations.scenicdata.com)
 
 1. Download
 
-`wget -O weewx-nowdawn.zip https://github.com/Now-Dawn/weewx-nowdawn/archive/master.zip`
+`wget -O weewx-scenic.zip https://github.com/ScenicWeather/weewx-scenic/archive/master.zip`
 
 1. Run the installer
 
-`wee_extension --install weewx-nowdawn.zip`
+`wee_extension --install weewx-scenic.zip`
 
 1. Enter parameters in the WeeWx configuration file
 
 `[StdRESTful]
-    [[NowDawn]]
+    [[Scenic]]
         api_key = API_KEY`
 
 1. Restart WeeWx
